@@ -248,8 +248,9 @@ $htmlContent = @"
 
         .badge {
             display: inline-block;
-            padding: 6px 10px;
-            font-size: 0.95rem;
+            padding: 4px 8px;
+            font-size: 1.2rem;
+            line-height: 1;
             border-radius: 8px;
             font-weight: 700;
         }
@@ -333,7 +334,7 @@ $htmlContent = @"
             table { min-width: 680px; font-size: 0.95rem; }
             th { font-size: 1rem; padding: 13px 10px; }
             td { padding: 12px 10px; }
-            .badge { padding: 5px 7px; font-size: 0.8rem; }
+            .badge { padding: 4px 6px; font-size: 1rem; }
             .alphabet-bar { display: none; }
             footer { font-size: 0.8rem; padding: 7px 5px; }
         }
@@ -479,11 +480,11 @@ document.addEventListener("DOMContentLoaded", function() {
             tr.setAttribute("data-index", i);
 
             const audioBadge = (r.Cancion && r.Cancion !== 'N/A') 
-                ? '<span class="badge badge-ok">Audio OK</span>' 
-                : '<span class="badge badge-na">Sin Audio</span>';
+                ? '<span class="badge badge-ok" title="Audio OK" aria-label="Audio OK">&#128077;</span>' 
+                : '<span class="badge badge-na" title="Sin Audio" aria-label="Sin Audio">&#9888;</span>';
             const videoBadge = (r.Video && r.Video !== 'N/A') 
-                ? '<span class="badge badge-ok">Video OK</span>' 
-                : '<span class="badge badge-na">Sin Video</span>';
+                ? '<span class="badge badge-ok" title="Video OK" aria-label="Video OK">&#128077;</span>' 
+                : '<span class="badge badge-na" title="Sin Video" aria-label="Sin Video">&#9888;</span>';
 
             tr.innerHTML = 
                 '<td title="' + escapeHtml(r.Artista) + '"><strong>' + escapeHtml(r.Artista) + '</strong></td>' +
