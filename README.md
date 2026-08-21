@@ -2,6 +2,7 @@
 
 Una solución automatizada en **PowerShell 7** para escanear carpetas de canciones de **UltraStar Delux**, extraer su metadata (Artista, Título, Categoría, Idioma, presencia de Audio/Video) y generar un **listado interactivo en HTML** optimizado para su visualización en pantallas de gran formato (Smart TVs / Monitores de Karaoke).
 Una fácil solución cuando tienes una gran cantidad de canciones en UltraStar Deluxe.
+
 ---
 
 ## 🚀 Características Principales
