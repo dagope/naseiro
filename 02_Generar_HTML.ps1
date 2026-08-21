@@ -388,7 +388,7 @@ $htmlContent = @"
     </div>
 </div>
 
-<footer>Feito con &hearts; polos romeiros do folgueiro.</footer>
+<footer>Feito con &hearts; polos romeiros do Folgueiro.</footer>
 
 <div class="alphabet-bar" id="alphabetBar"></div>
 
