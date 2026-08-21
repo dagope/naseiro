@@ -28,31 +28,23 @@ $index = 0
 function Read-TextFileSafe {
     param([string]$path)
     $bytes = [System.IO.File]::ReadAllBytes($path)
-    
-    # Detección simple de UTF-8
-    $isUtf8 = $false
+
+    # Respetar BOM explícito y validar UTF-8 de forma estricta antes del fallback ANSI.
     if ($bytes.Length -ge 3 -and $bytes[0] -eq 0xEF -and $bytes[1] -eq 0xBB -and $bytes[2] -eq 0xBF) {
-        $isUtf8 = $true
-    } else {
-        # Verificar secuencia UTF-8 válida
-        $i = 0
-        $validUtf8 = $true
-        while ($i -lt $bytes.Length) {
-            if ($bytes[$i] -gt 0x7F) {
-                if (($bytes[$i] -band 0xE0) -eq 0xC0) { $i += 1 }
-                elseif (($bytes[$i] -band 0xF0) -eq 0xE0) { $i += 2 }
-                elseif (($bytes[$i] -band 0xF8) -eq 0xF0) { $i += 3 }
-                else { $validUtf8 = $false; break }
-            }
-            $i++
-        }
-        $isUtf8 = $validUtf8
+        return [System.Text.Encoding]::UTF8.GetString($bytes, 3, $bytes.Length - 3) -split "`r?`n"
+    }
+    if ($bytes.Length -ge 2 -and $bytes[0] -eq 0xFF -and $bytes[1] -eq 0xFE) {
+        return [System.Text.Encoding]::Unicode.GetString($bytes, 2, $bytes.Length - 2) -split "`r?`n"
+    }
+    if ($bytes.Length -ge 2 -and $bytes[0] -eq 0xFE -and $bytes[1] -eq 0xFF) {
+        return [System.Text.Encoding]::BigEndianUnicode.GetString($bytes, 2, $bytes.Length - 2) -split "`r?`n"
     }
 
-    if ($isUtf8) {
-        return [System.Text.Encoding]::UTF8.GetString($bytes) -split "`r?`n"
-    } else {
-        # Fallback a Windows-1252 / ANSI (mantiene eñes y tildes en archivos de texto antiguos)
+    $strictUtf8 = [System.Text.UTF8Encoding]::new($false, $true)
+    try {
+        return $strictUtf8.GetString($bytes) -split "`r?`n"
+    }
+    catch [System.Text.DecoderFallbackException] {
         $ansi = [System.Text.Encoding]::GetEncoding(1252)
         return $ansi.GetString($bytes) -split "`r?`n"
     }
@@ -134,12 +126,24 @@ foreach ($f in $files) {
 
 Write-Progress -Activity "Procesando canciones UltraStar" -Completed
 
-# Ordenar y Exportar directamente con Export-Csv para evitar fallos de codificación
+# Ordenar y exportar con BOM para que Excel detecte UTF-8 correctamente.
 $mainListSorted = $mainList | Sort-Object Artista, Titulo
 $dupListSorted  = $dupList  | Sort-Object Artista, Titulo
 
-$mainListSorted | Export-Csv -LiteralPath $outputMain -Delimiter ";" -NoTypeInformation -Encoding UTF8
-$dupListSorted  | Export-Csv -LiteralPath $outputDup  -Delimiter ";" -NoTypeInformation -Encoding UTF8
+$utf8Bom = [System.Text.UTF8Encoding]::new($true)
+$mainCsv = @($mainListSorted | ConvertTo-Csv -Delimiter ";" -NoTypeInformation)
+$dupCsv  = @($dupListSorted  | ConvertTo-Csv -Delimiter ";" -NoTypeInformation)
+
+# ConvertTo-Csv no devuelve líneas cuando la colección está vacía.
+if ($mainCsv.Count -eq 0) {
+    $mainCsv = @('"Artista";"Titulo";"Duracion";"Categoria";"Idioma";"Carpeta";"Letra";"Cancion";"Video"')
+}
+if ($dupCsv.Count -eq 0) {
+    $dupCsv = @('"Artista";"Titulo";"Duracion";"Categoria";"Idioma";"Carpeta";"Letra";"Cancion";"Video";"Veces"')
+}
+
+[System.IO.File]::WriteAllLines($outputMain, [string[]]$mainCsv, $utf8Bom)
+[System.IO.File]::WriteAllLines($outputDup, [string[]]$dupCsv, $utf8Bom)
 
 Write-Host "CSV principal guardado correctamente en: $outputMain" -ForegroundColor Green
 Write-Host "CSV duplicados guardado correctamente en: $outputDup" -ForegroundColor Green
