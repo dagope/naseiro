@@ -4,12 +4,17 @@
 
 # Obtener la ruta del script
 $scriptDir = if ($PSScriptRoot) { $PSScriptRoot } else { Split-Path -Parent -Path $MyInvocation.MyCommand.Definition }
+$docsDir   = Join-Path -Path $scriptDir -ChildPath "docs"
+
+if (-not (Test-Path -LiteralPath $docsDir)) {
+    New-Item -ItemType Directory -Path $docsDir | Out-Null
+}
 
 $songsDir = "C:\UltraStar canciones"
 $dupDir   = "C:\UltraStar canciones duplicadas"
 
-$outputMain = Join-Path -Path $scriptDir -ChildPath "listado_ultrastar.csv"
-$outputDup  = Join-Path -Path $scriptDir -ChildPath "duplicados_ultrastar.csv"
+$outputMain = Join-Path -Path $docsDir -ChildPath "listado_ultrastar.csv"
+$outputDup  = Join-Path -Path $docsDir -ChildPath "duplicados_ultrastar.csv"
 
 if (-not (Test-Path -LiteralPath $dupDir)) {
     New-Item -ItemType Directory -Path $dupDir | Out-Null

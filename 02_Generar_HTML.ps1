@@ -3,8 +3,13 @@
 # ==============================================================================
 
 $scriptDir  = if ($PSScriptRoot) { $PSScriptRoot } else { Split-Path -Parent -Path $MyInvocation.MyCommand.Definition }
-$csvFile    = Join-Path -Path $scriptDir -ChildPath "listado_ultrastar.csv"
-$outputHtml = Join-Path -Path $scriptDir -ChildPath "listado_ultrastar.html"
+$docsDir    = Join-Path -Path $scriptDir -ChildPath "docs"
+$csvFile    = Join-Path -Path $docsDir -ChildPath "listado_ultrastar.csv"
+$outputHtml = Join-Path -Path $docsDir -ChildPath "index.html"
+
+if (-not (Test-Path -LiteralPath $docsDir)) {
+    New-Item -ItemType Directory -Path $docsDir | Out-Null
+}
 
 if (-not (Test-Path -LiteralPath $csvFile)) {
     Write-Error "No se encuentra el archivo CSV: $csvFile. Ejecuta primero 1_Generar_CSV.ps1"
@@ -68,8 +73,8 @@ $htmlContent = @"
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
             margin: 0;
-            padding: 24px;
-            padding-bottom: 90px;
+            padding: 16px;
+            padding-bottom: 58px;
             background-color: var(--bg-color);
             color: var(--text-color);
             transition: background-color 0.3s, color 0.3s;
@@ -84,15 +89,16 @@ $htmlContent = @"
         }
 
         header {
+            position: sticky;
+            top: 0;
+            z-index: 90;
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 20px;
+            align-items: flex-start;
+            gap: 14px;
             margin-bottom: 20px;
             background: var(--card-bg);
-            padding: 24px 30px;
-            border-radius: 16px;
+            padding: 10px 14px;
+            border-radius: 0 0 12px 12px;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
             width: 100%;
             box-sizing: border-box;
@@ -100,7 +106,7 @@ $htmlContent = @"
 
         h1 {
             margin: 0;
-            font-size: 2.2rem;
+            font-size: clamp(1.1rem, 2vw, 1.5rem);
             font-weight: 800;
             white-space: nowrap;
         }
@@ -108,17 +114,17 @@ $htmlContent = @"
         .controls {
             display: flex;
             align-items: center;
-            gap: 16px;
-            flex-wrap: wrap;
-            flex-grow: 1;
+            gap: 12px;
+            flex: 1;
+            min-width: 0;
             justify-content: flex-end;
+            flex-wrap: wrap;
         }
 
         .search-container {
             position: relative;
-            flex-grow: 1;
-            max-width: 450px;
-            min-width: 250px;
+            flex: 1 1 260px;
+            min-width: 200px;
         }
 
         input[type="text"], select {
@@ -133,7 +139,7 @@ $htmlContent = @"
             transition: border-color 0.2s;
         }
 
-        #searchBox { width: 100%; }
+        #searchBox { width: 100%; min-width: 0; }
 
         .filter-group {
             display: flex;
@@ -142,6 +148,12 @@ $htmlContent = @"
             font-size: 1.1rem;
             font-weight: 600;
             white-space: nowrap;
+            flex: 0 0 104px;
+        }
+
+        #multiFilter {
+            width: 100%;
+            min-width: 0;
         }
 
         .theme-btn {
@@ -162,7 +174,9 @@ $htmlContent = @"
 
         .stats {
             width: 100%;
-            font-size: 1.2rem;
+            margin: -12px 4px 12px;
+            font-size: 0.78rem;
+            white-space: nowrap;
             color: var(--text-secondary);
             font-weight: 600;
         }
@@ -174,7 +188,9 @@ $htmlContent = @"
             overflow-x: auto;
             width: 100%;
             box-sizing: border-box;
-            max-height: 68vh;
+            height: calc(100vh - 150px);
+            height: calc(100dvh - 150px);
+            min-height: 240px;
             overflow-y: auto;
         }
 
@@ -184,7 +200,7 @@ $htmlContent = @"
             border-collapse: collapse;
             text-align: left;
             font-size: 1.15rem;
-            min-width: 1100px;
+            min-width: 760px;
         }
 
         th {
@@ -203,13 +219,12 @@ $htmlContent = @"
             text-overflow: ellipsis;
         }
 
-        th:nth-child(1) { width: 23%; }
-        th:nth-child(2) { width: 23%; }
-        th:nth-child(3) { width: 14%; }
-        th:nth-child(4) { width: 12%; }
-        th:nth-child(5) { width: 18%; }
-        th:nth-child(6) { width: 5%; }
-        th:nth-child(7) { width: 5%; }
+        th:nth-child(1) { width: 25%; }
+        th:nth-child(2) { width: 25%; }
+        th:nth-child(3) { width: 17%; }
+        th:nth-child(4) { width: 13%; }
+        th:nth-child(5) { width: 10%; }
+        th:nth-child(6) { width: 10%; }
 
         th::after {
             content: ' \21C5';
@@ -252,24 +267,27 @@ $htmlContent = @"
             display: flex;
             justify-content: center;
             align-items: center;
-            gap: 6px;
+            gap: clamp(1px, 0.4vw, 6px);
             box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.25);
             z-index: 100;
-            flex-wrap: wrap;
+            flex-wrap: nowrap;
+            overflow: hidden;
         }
 
         .alpha-btn {
             background-color: var(--alphabet-btn-bg);
             color: var(--alphabet-btn-text);
             border: none;
-            padding: 8px 12px;
-            font-size: 1.1rem;
+            padding: clamp(4px, 0.6vw, 8px) clamp(2px, 0.6vw, 12px);
+            font-size: clamp(0.72rem, 1.5vw, 1.1rem);
             font-weight: 700;
             border-radius: 6px;
             cursor: pointer;
             transition: all 0.2s ease-in-out;
-            min-width: 36px;
+            flex: 1 1 0;
+            min-width: 0;
             text-align: center;
+            white-space: nowrap;
         }
 
         .alpha-btn:hover:not(:disabled) {
@@ -281,6 +299,47 @@ $htmlContent = @"
             opacity: 0.25;
             cursor: not-allowed;
             background-color: #475569;
+        }
+
+        footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 80;
+            background-color: var(--card-bg);
+            color: var(--text-secondary);
+            text-align: center;
+            font-size: 0.95rem;
+            padding: 9px 8px;
+            box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.12);
+        }
+
+        @media (max-width: 700px) {
+            body { padding: 0 8px 42px; font-size: 16px; }
+            header { gap: 8px; padding: 8px; margin-bottom: 10px; }
+            h1 { font-size: 1rem; }
+            .controls { gap: 6px; }
+            .search-container { flex: 1 1 200px; min-width: 180px; }
+            input[type="text"], select { padding: 9px 8px; font-size: 0.9rem; }
+            .filter-group { gap: 4px; font-size: 0; flex: 0 0 82px; }
+            .theme-btn { padding: 8px 10px; font-size: 1.1rem; }
+            .table-responsive {
+                height: calc(100vh - 108px);
+                height: calc(100dvh - 108px);
+                min-height: 220px;
+                border-radius: 12px;
+            }
+            table { min-width: 680px; font-size: 0.95rem; }
+            th { font-size: 1rem; padding: 13px 10px; }
+            td { padding: 12px 10px; }
+            .badge { padding: 5px 7px; font-size: 0.8rem; }
+            .alphabet-bar { display: none; }
+            footer { font-size: 0.8rem; padding: 7px 5px; }
+        }
+
+        @media (min-width: 701px) and (max-width: 760px) {
+            .alphabet-bar { display: none; }
         }
     </style>
 </head>
@@ -296,18 +355,20 @@ $htmlContent = @"
             </div>
 
             <div class="filter-group">
-                <label for="multiFilter">Múltiples Players:</label>
-                <select id="multiFilter">
-                    <option value="">Todos</option>
-                    <option value="si">Sí</option>
+                <select id="multiFilter" aria-label="Filtrar por número de cantantes">
+                    <option value="" disabled selected hidden>Multi</option>
+                    <option value="todos">Todos</option>
+                    <option value="single">Solo un cantante</option>
+                    <option value="multi">Mas de uno</option>
                 </select>
             </div>
 
             <button id="themeToggle" class="theme-btn" title="Cambiar tema">🌙</button>
         </div>
 
-        <div class="stats" id="counter">Cargando datos...</div>
     </header>
+
+    <div class="stats" id="counter">Cargando datos...</div>
 
     <div class="table-responsive" id="scrollContainer">
         <table id="songsTable">
@@ -317,7 +378,6 @@ $htmlContent = @"
                     <th data-col="Titulo">Título</th>
                     <th data-col="Categoria">Categoría</th>
                     <th data-col="Idioma">Idioma</th>
-                    <th data-col="Carpeta">Carpeta</th>
                     <th data-col="Cancion">Audio</th>
                     <th data-col="Video">Video</th>
                 </tr>
@@ -326,6 +386,8 @@ $htmlContent = @"
         </table>
     </div>
 </div>
+
+<footer>Feito con &hearts; polos romeiros do folgueiro.</footer>
 
 <div class="alphabet-bar" id="alphabetBar"></div>
 
@@ -428,7 +490,6 @@ document.addEventListener("DOMContentLoaded", function() {
                 '<td title="' + escapeHtml(r.Titulo) + '">' + escapeHtml(r.Titulo) + '</td>' +
                 '<td title="' + escapeHtml(r.Categoria) + '">' + escapeHtml(r.Categoria) + '</td>' +
                 '<td title="' + escapeHtml(r.Idioma) + '">' + escapeHtml(r.Idioma) + '</td>' +
-                '<td title="' + escapeHtml(r.Carpeta) + '">' + escapeHtml(r.Carpeta) + '</td>' +
                 '<td>' + audioBadge + '</td>' +
                 '<td>' + videoBadge + '</td>';
 
@@ -492,10 +553,10 @@ document.addEventListener("DOMContentLoaded", function() {
         currentlyRendered = 0;
         scrollContainer.scrollTop = 0;
 
-        counter.innerText = "Mostrando " + filteredData.length + " de " + rawData.length + " canciones";
+        counter.innerText = "Canciones: " + filteredData.length + " de " + rawData.length;
 
         if (filteredData.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:30px; color:var(--text-secondary);">No se encontraron canciones</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:30px; color:var(--text-secondary);">No se encontraron canciones</td></tr>';
             updateAlphabetButtons();
             return;
         }
@@ -509,7 +570,11 @@ document.addEventListener("DOMContentLoaded", function() {
         const multiVal = document.getElementById("multiFilter").value;
 
         filteredData = rawData.filter(function(r) {
-            if (multiVal === "si" && !(r.Carpeta || "").toUpperCase().includes("[MULTI]")) {
+            const isMulti = (r.Carpeta || "").toUpperCase().includes("[MULTI]");
+            if (multiVal === "single" && isMulti) {
+                return false;
+            }
+            if (multiVal === "multi" && !isMulti) {
                 return false;
             }
             if (!q) return true;
