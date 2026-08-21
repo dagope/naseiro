@@ -398,6 +398,13 @@ document.addEventListener("DOMContentLoaded", function() {
         return (char >= "A" && char <= "Z") ? char : "#";
     }
 
+    function normalizeSearchText(str) {
+        return String(str || "")
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .toLowerCase();
+    }
+
     function renderNextBatch() {
         if (currentlyRendered >= filteredData.length) return;
 
@@ -498,7 +505,7 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 
     function applyFiltersAndSort() {
-        const q = document.getElementById("searchBox").value.toLowerCase().trim();
+        const q = normalizeSearchText(document.getElementById("searchBox").value).trim();
         const multiVal = document.getElementById("multiFilter").value;
 
         filteredData = rawData.filter(function(r) {
@@ -506,11 +513,11 @@ document.addEventListener("DOMContentLoaded", function() {
                 return false;
             }
             if (!q) return true;
-            return (r.Artista || "").toLowerCase().includes(q) ||
-                   (r.Titulo || "").toLowerCase().includes(q) ||
-                   (r.Categoria || "").toLowerCase().includes(q) ||
-                   (r.Idioma || "").toLowerCase().includes(q) ||
-                   (r.Carpeta || "").toLowerCase().includes(q);
+                 return normalizeSearchText(r.Artista).includes(q) ||
+                     normalizeSearchText(r.Titulo).includes(q) ||
+                     normalizeSearchText(r.Categoria).includes(q) ||
+                     normalizeSearchText(r.Idioma).includes(q) ||
+                     normalizeSearchText(r.Carpeta).includes(q);
         });
 
         filteredData.sort(function(a, b) {
